@@ -12,23 +12,41 @@ section .text
 _start:
 mov rax, [rsp]
 dec rax
-je do_stdin
+je .do_stdin
+add rsp, 16
+.loop_start:
+mov rdi, [rsp]
+test rdi, rdi
+je .exit
+xor rsi, rsi
+xor rdx, rdx
+mov rax, 2
+syscall
+mov rdi, rax
+call do_read_write
+add rsp, 8
+jmp .loop_start
+.do_stdin:
+mov rdi, 0
+call do_read_write
+.exit:
 call _exit
 
 
-do_stdin:
+do_read_write:
+push rdi
 .entry:
-mov rsi, buffer
-mov rdx, BUFFER_SIZE
+pop rdi
+push rdi
 call read
 test rax, rax
 je .exit
-mov rsi, buffer
 mov rdx, rax
 call write
 jmp .entry
 .exit:
-call _exit
+pop rdi
+ret
 
 strlen:
 push rcx
@@ -45,20 +63,20 @@ pop rcx
 ret
 
 ; Reads from standard input
-; rsi must be pointer to the buffer
-; rdx should be count of bytes to be read
+; rdi should be file descriptor to read from
 read:
 mov rax, 0 ; syscall number for SYS_read
-mov rdi, 0 ; 0 -> fd for stdin
+mov rdx, BUFFER_SIZE
+mov rsi, buffer
 syscall
 ret
 
 ; Writes to standard output
-; rsi must be pointer to the buffer
 ; rdx should be count of bytes to be written
 write:
 mov rax, 1 ; syscall number for SYS_write
 mov rdi, 1 ; 1 -> fd for stdout
+mov rsi, buffer
 syscall
 ret
 
