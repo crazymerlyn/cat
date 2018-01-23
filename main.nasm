@@ -4,6 +4,15 @@ global _start
 
 BUFFER_SIZE equ 256
 
+%define sys_read 0
+%define sys_write 1
+
+%define stdin 0
+%define stdout 1
+
+%define sys_exit 60
+%define success 0
+
 section .data
 buffer:
 times BUFFER_SIZE db 0
@@ -27,7 +36,7 @@ call do_read_write
 add rsp, 8
 jmp .loop_start
 .do_stdin:
-mov rdi, 0
+mov rdi, stdin
 call do_read_write
 .exit:
 call _exit
@@ -65,7 +74,7 @@ ret
 ; Reads from standard input
 ; rdi should be file descriptor to read from
 read:
-mov rax, 0 ; syscall number for SYS_read
+mov rax, sys_read
 mov rdx, BUFFER_SIZE
 mov rsi, buffer
 syscall
@@ -74,16 +83,16 @@ ret
 ; Writes to standard output
 ; rdx should be count of bytes to be written
 write:
-mov rax, 1 ; syscall number for SYS_write
-mov rdi, 1 ; 1 -> fd for stdout
+mov rax, sys_write
+mov rdi, stdout
 mov rsi, buffer
 syscall
 ret
 
 ; Exit successfully
 _exit:
-mov rax, 60
-mov rdi, 0
+mov rax, sys_exit
+mov rdi, success
 syscall
 ret
 
